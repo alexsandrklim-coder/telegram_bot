@@ -2,7 +2,7 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir python-telegram-bot python-docx
+RUN pip install --no-cache-dir python-telegram-bot python-docx notion-client
 
 COPY bot.py .
 

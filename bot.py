@@ -30,6 +30,39 @@ try:
 except ImportError:
     logger.warning("python-docx not installed — docx generation disabled")
 
+HAS_NOTION = False
+try:
+    from notion_client import Client as NotionClient
+    NOTION_TOKEN = os.environ.get("NOTION_TOKEN", "")
+    NOTION_DB_ID = os.environ.get("NOTION_DB_ID", "")
+    if NOTION_TOKEN and NOTION_DB_ID:
+        notion_client = NotionClient(auth=NOTION_TOKEN)
+        HAS_NOTION = True
+        logger.info("Notion integration enabled")
+    else:
+        logger.warning("NOTION_TOKEN or NOTION_DB_ID not set — Notion disabled")
+except ImportError:
+    logger.warning("notion-client not installed — Notion disabled")
+
+
+def save_to_notion(question, answer, user_id, session_type="random"):
+    if not HAS_NOTION:
+        return
+    try:
+        notion_client.pages.create(
+            parent={"database_id": NOTION_DB_ID},
+            properties={
+                "Вопрос": {"title": [{"text": {"content": question}}]},
+                "Ответ": {"rich_text": [{"text": {"content": answer[:2000]}}]},
+                "User ID": {"rich_text": [{"text": {"content": user_id}}]},
+                "Дата": {"date": {"start": datetime.datetime.now().strftime("%Y-%m-%d")}},
+                "Сессия": {"select": {"name": session_type}},
+            },
+        )
+        logger.info("Saved to Notion: user=%s question=%s", user_id, question[:50])
+    except Exception as e:
+        logger.error("Failed to save to Notion: %s", e)
+
 _file_lock = threading.Lock()
 
 BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
@@ -639,6 +672,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         current_q = questions[q_idx]
         all_answers[user_id][current_q] = text
         save_answers(all_answers)
+        session_type = state.get("last_mode", "random")
+        save_to_notion(current_q, text, user_id, session_type)
         step += 1
         state["step"] = step
         user_states[user_id] = state
