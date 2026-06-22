@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.log
+*.pid
+*.bak
+.env
+answers.json
+selected.json
+monitor.py
+monitor_report.txt
+bot_error.log
+tunnel.log

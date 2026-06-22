@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Инвентаризация</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #1a1a2e;
+  color: #e0e0f0;
+  padding: 16px;
+  padding-bottom: 100px;
+}
+h1 {
+  font-size: 20px;
+  margin-bottom: 16px;
+  color: #818cf8;
+}
+.question {
+  background: #2a2a4a;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+  border: 2px solid transparent;
+}
+.question:active { background: #3a3a5a; }
+.question.selected { border-color: #6366f1; background: rgba(99,102,241,0.15); }
+.checkbox {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 2px solid #8888a0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 14px;
+  margin-top: 2px;
+  transition: all 0.2s;
+}
+.question.selected .checkbox {
+  background: #6366f1;
+  border-color: #6366f1;
+}
+.question.selected .checkbox::after {
+  content: "✓";
+  color: #fff;
+  font-weight: bold;
+}
+.q-text {
+  font-size: 15px;
+  line-height: 1.5;
+}
+.q-num {
+  color: #818cf8;
+  font-weight: 600;
+}
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #1a1a2e;
+  padding: 12px 16px;
+  border-top: 1px solid #333;
+  display: flex;
+  gap: 10px;
+}
+.btn {
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary {
+  background: linear-gradient(135deg, #6366f1, #818cf8);
+  color: #fff;
+}
+.btn-secondary {
+  background: #2a2a4a;
+  color: #e0e0f0;
+  border: 1px solid #444;
+}
+.counter {
+  text-align: center;
+  color: #8888a0;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+</style>
+</head>
+<body>
+
+<h1>Инвентаризация</h1>
+<div class="counter" id="counter">Выбрано: 0 из 0</div>
+<div id="questions"></div>
+
+<div class="bottom-bar">
+  <button class="btn btn-secondary" onclick="selectAll()">Выбрать все</button>
+  <button class="btn btn-primary" onclick="startInventory()">Начать</button>
+</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const userId = params.get('user_id') || 'default';
+const QUESTIONS = [
+  "Верю ли я, что моя Высшая Сила может показать мне, как жить и следовать Ее воле?",
+  "Вижу ли я в своей сегодняшней жизни старые стереотипы поведения? Если да, то какие именно?",
+  "Был ли я обидчивым, эгоистичным, нечестным или трусивым?",
+  "Настроял ли я сам себя на то, чтобы в чем-то разочароваться?",
+  "Быстрал ли я добрым и любящим ко всем окружающим?",
+  "Беспокоился ли я о вчерашнем или завтрашнем дне?",
+  "Позволил ли я себе сегодня впасть в одержимость чем-ли?",
+  "Позволил ли я себе быть слишком голодным, злым, одиноким или усталым?",
+  "Не отношусь ли я к себе слишком серьезно в какой-то из сфер моей жизни?",
+  "Не страдал ли я от физических, психических или духовных проблем?",
+  "Не умолчал ли я о том, чем следовало бы поделиться со спонсором?",
+  "Испытывал ли я сегодня крайние сильные чувства? Что это были за чувства, и в связи с чем я их испытывал?",
+  "Какие сферы моей жизни являются сегодня проблемными?",
+  "Какие дефекты проявились сегодня в моей жизни? Как именно?",
+  "Был ли сегодня в моей жизни страх?",
+  "Что я сегодня сделал такого, чего лучше было бы не делать?",
+  "Что я сегодня не сделал из того, что хотел?",
+  "Есть ли у меня готовность меняться?",
+  "Возникали ли сегодня конфликты в моих отношениях? Какие именно?",
+  "Удалось ли мне сохранить верность своим принципам в отношениях с другими людьми?",
+  "Не навредил ли я сегодня, прямо или косвенно, себе или кому-либо еще? Как именно?",
+  "Не следует ли мне извиниться перед кем-либо или возместить кому-либо ущерб?",
+  "В чем я ошибся? Что я сделал бы по-другому, если бы мог? Что мне стоит усвоить на будущее?",
+  "Осталась ли я сегодня чистый?",
+  "Был ли я сегодня добрым по отношению к самому себе?",
+  "Какие чувства я сегодня испытывал? Как они помогли мне поступить в соответствии с духовными принципами?",
+  "Как я сегодня служил другим людям?",
+  "О каких сегодняшних поступках я вспоминаю с удовольствием?",
+  "Что принесло мне сегодня удовлетворение?",
+  "Что я сегодня сделал такого, что обязательно нужно повторить?",
+  "Был ли я сегодня на собрании? Общался ли с другими выздоравливающими зависимыми?",
+  "За что я сегодня благодарен?",
+];
+
+let selected = new Set(QUESTIONS.map((_, i) => i));
+
+function render() {
+  const el = document.getElementById('questions');
+  el.innerHTML = QUESTIONS.map((q, i) => `
+    <div class="question ${selected.has(i) ? 'selected' : ''}" onclick="toggle(${i})">
+      <div class="checkbox"></div>
+      <div class="q-text"><span class="q-num">${i+1}.</span> ${q}</div>
+    </div>
+  `).join('');
+  document.getElementById('counter').textContent = `Выбрано: ${selected.size} из ${QUESTIONS.length}`;
+}
+
+function toggle(i) {
+  if (selected.has(i)) selected.delete(i);
+  else selected.add(i);
+  render();
+}
+
+function selectAll() {
+  if (selected.size === QUESTIONS.length) selected.clear();
+  else selected = new Set(QUESTIONS.map((_, i) => i));
+  render();
+}
+
+function startInventory() {
+  if (selected.size === 0) {
+    alert('Выбери хотя бы один вопрос!');
+    return;
+  }
+  const selectedArr = [...selected].sort((a,b) => a-b);
+  if (window.Telegram && window.Telegram.WebApp) {
+    window.Telegram.WebApp.sendData(JSON.stringify({
+      action: 'start_inventory',
+      questions: selectedArr
+    }));
+  } else {
+    alert('Выбрано вопросов: ' + selectedArr.length);
+  }
+}
+
+render();
+</script>
+</body>
+</html>
