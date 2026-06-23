@@ -519,8 +519,8 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     doc.save(filepath)
 
                     await _safe_edit(query, f"Отчёт за период с {date_from} по {date_str}\n({len(answered)} вопросов)")
+                    await _safe_reply(query.message, "Выбери действие:", reply_markup=get_main_keyboard())
                     with open(filepath, "rb") as f:
-                        await _safe_reply(query.message, "", reply_markup=get_main_keyboard())
                         await query.message.reply_document(
                             document=f,
                             filename="Отчёт.docx",
