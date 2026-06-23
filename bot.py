@@ -107,6 +107,8 @@ DEFAULT_QUESTIONS = [
     "Что я сегодня сделал такого, что обязательно нужно повторить?",
     "Был ли я сегодня на собрании? Общался ли с другими выздоравливающими зависимыми?",
     "За что я сегодня благодарен?",
+    "Брал ли я сегодня паузу (если да, то сколько раз)?",
+    "Получилось (сколько раз) применить практику НВП?",
 ]
 
 user_states = {}
@@ -715,12 +717,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             selected = saved_list
             mode_text = f"выбрано из списка: {len(selected)}"
         else:
-            fixed = [len(questions) - 2, len(questions) - 1]
+            fixed = [len(questions) - 3, len(questions) - 2, len(questions) - 1]
             pool = [i for i in range(len(questions)) if i not in fixed]
             random_count = min(5, len(pool))
             random_part = random.sample(pool, random_count)
             selected = random_part + fixed
-            mode_text = f"{random_count} случайных + 2 обязательных"
+            mode_text = f"{random_count} случайных + 3 обязательных"
         user_states[user_id] = {
             "collecting": True,
             "step": 0,
@@ -735,7 +737,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if text == "🎲 Рандомные вопросы":
-        fixed = [len(questions) - 2, len(questions) - 1]
+        fixed = [len(questions) - 3, len(questions) - 2, len(questions) - 1]
         pool = [i for i in range(len(questions)) if i not in fixed]
         random_count = min(5, len(pool))
         random_part = random.sample(pool, random_count)
@@ -748,7 +750,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         }
         await _safe_reply(
             update.message,
-            f"Случайные вопросы ({random_count} + 2 обязательных)!\n\nВопрос 1/{len(selected)}:\n\n{questions[selected[0]]}",
+            f"Случайные вопросы ({random_count} + 3 обязательных)!\n\nВопрос 1/{len(selected)}:\n\n{questions[selected[0]]}",
             reply_markup=get_inventory_keyboard(),
         )
         return
