@@ -65,7 +65,7 @@ def save_to_notion(question, answer, user_id, session_type="random"):
 
 _file_lock = threading.Lock()
 
-BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "8842784896:AAFmi8zdWBUEzXTtA_fNX9wDIGorclW4968")
 if not BOT_TOKEN:
     logger.error("TELEGRAM_BOT_TOKEN environment variable is not set!")
     sys.exit(1)
@@ -584,8 +584,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if text in MAIN_BUTTONS:
         if user_states[user_id].get("collecting"):
             user_states[user_id] = {}
-            await _safe_reply(update.message, "Инвентаризация остановлена.", reply_markup=get_main_keyboard())
-            return
 
     all_answers = load_answers()
     questions = load_questions()
